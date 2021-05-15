@@ -12,6 +12,8 @@ type Submission struct {
 	ToTaskID          int32     `json:"to_task_id"`
 	TaskSubtasks      int32     `json:"task_subtasks"`
 	SubmissionAnswers []string  `json:"submission_answers"`
+	SubmissionResults []bool    `json:"submission_results"`
+	SubmissionScore   float64   `json:"submission_score"`
 	CreatedAt         time.Time `json:"created_at"`
 }
 
@@ -21,9 +23,10 @@ type Task struct {
 	Problemname string `json:"problemname"`
 	Content     string `json:"content"`
 	// max 6 min 1
-	Subtasks  int32     `json:"subtasks"`
-	Answers   []string  `json:"answers"`
-	CreatedAt time.Time `json:"created_at"`
+	Subtasks      int32     `json:"subtasks"`
+	Answers       []string  `json:"answers"`
+	SubtasksScore []float64 `json:"subtasks_score"`
+	CreatedAt     time.Time `json:"created_at"`
 }
 
 type User struct {

@@ -3,9 +3,11 @@ INSERT INTO submissions (
     from_user_id,
     to_task_id,
     task_subtasks, 
-    submission_answers
+    submission_answers,
+    submission_score,
+    submission_results
 ) VALUES (
-    $1 , $2 , $3 , $4
+    $1 , $2 , $3 , $4 , $5 , $6
 ) RETURNING *;
 
 -- name: ListSubmissions :many
@@ -17,3 +19,9 @@ OFFSET $2;
 -- name: ListAllSubmissions :many
 SELECT * FROM submissions
 ORDER BY id;
+
+-- name: UpdateSubmissionScore :one 
+UPDATE submissions
+SET submission_score = $2
+WHERE id = $1
+RETURNING *;

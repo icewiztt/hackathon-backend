@@ -61,3 +61,19 @@ func RandomAnswers(n int) []string {
 	}
 	return val
 }
+
+func RandomSubScore(n int) []float64 {
+	val := make([]float64, n)
+	for i := 0; i < n; i++ {
+		val[i] = float64(RandomInt(1, 100))
+	}
+	return val
+}
+
+func RandomSubmissionResult(n int) []bool {
+	val := make([]bool, n)
+	for i := 0; i < n; i++ {
+		val[i] = RandomInt(0, 1) != 0
+	}
+	return val
+}

@@ -4,9 +4,10 @@ INSERT INTO tasks (
     problemname,
     content,
     subtasks,
-    answers
+    answers,
+    subtasks_score
 ) VALUES (
-    $1 , $2 , $3 , $4 , $5 
+    $1 , $2 , $3 , $4 , $5 , $6
 ) RETURNING *;
 
 -- name: GetTask :one
@@ -52,3 +53,10 @@ UPDATE tasks
 SET content = $2
 WHERE id = $1
 RETURNING *;
+
+-- name: UpdateSubtasksScore :one
+UPDATE tasks
+SET subtasks_score = $2
+WHERE id = $1
+RETURNING *;
+

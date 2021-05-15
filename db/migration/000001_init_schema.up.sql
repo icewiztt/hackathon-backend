@@ -1,6 +1,6 @@
 CREATE TABLE "users" (
   "id" serial PRIMARY KEY,
-  "username" varchar NOT NULL,
+  "username" varchar UNIQUE NOT NULL,
   "fullname" varchar NOT NULL,
   "password_encoded" varchar NOT NULL,
   "usertype" int NOT NULL,
@@ -14,6 +14,7 @@ CREATE TABLE "tasks" (
   "content" varchar NOT NULL,
   "subtasks" int NOT NULL,
   "answers" VARCHAR[6],
+  "subtasks_score"  float[6],
   "created_at" timestamptz NOT NULL DEFAULT (now())
 );
 
@@ -23,6 +24,8 @@ CREATE TABLE "submissions" (
   "to_task_id" int NOT NULL,
   "task_subtasks" int NOT NULL,
   "submission_answers" VARCHAR[6],
+  "submission_results" BOOLEAN[6],
+  "submission_score" float NOT NULL,
   "created_at" timestamptz NOT NULL DEFAULT (now())
 );
 

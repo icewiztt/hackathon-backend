@@ -12,11 +12,12 @@ import (
 func CreateRandomTask(t *testing.T) Task {
 	Subtasks_tmp := util.RandomSubtasks()
 	arg := CreateTaskParams{
-		Shortname:   util.RandomShortname(),
-		Problemname: util.RandomProblemname(),
-		Content:     util.RandomContent(),
-		Subtasks:    Subtasks_tmp,
-		Answers:     util.RandomAnswers(int(Subtasks_tmp)),
+		Shortname:     util.RandomShortname(),
+		Problemname:   util.RandomProblemname(),
+		Content:       util.RandomContent(),
+		Subtasks:      Subtasks_tmp,
+		SubtasksScore: util.RandomSubScore(int(Subtasks_tmp)),
+		Answers:       util.RandomAnswers(int(Subtasks_tmp)),
 	}
 
 	task, err := testQueries.CreateTask(context.Background(), arg)
@@ -135,5 +136,18 @@ func TestUpdateTaskAnswers(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, task_update.Answers, arg.Answers)
 	task.Answers = task_update.Answers
+	require.Equal(t, task, task_update)
+}
+
+func TestUpdateSubtasksScore(t *testing.T) {
+	task := CreateRandomTask(t)
+	arg := UpdateSubtasksScoreParams{
+		ID:            task.ID,
+		SubtasksScore: util.RandomSubScore(int(task.Subtasks)),
+	}
+	task_update, err := testQueries.UpdateSubtasksScore(context.Background(), arg)
+	require.NoError(t, err)
+	require.Equal(t, task_update.SubtasksScore, arg.SubtasksScore)
+	task.SubtasksScore = task_update.SubtasksScore
 	require.Equal(t, task, task_update)
 }

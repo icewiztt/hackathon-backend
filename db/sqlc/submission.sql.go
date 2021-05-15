@@ -14,10 +14,12 @@ INSERT INTO submissions (
     from_user_id,
     to_task_id,
     task_subtasks, 
-    submission_answers
+    submission_answers,
+    submission_score,
+    submission_results
 ) VALUES (
-    $1 , $2 , $3 , $4
-) RETURNING id, from_user_id, to_task_id, task_subtasks, submission_answers, created_at
+    $1 , $2 , $3 , $4 , $5 , $6
+) RETURNING id, from_user_id, to_task_id, task_subtasks, submission_answers, submission_results, submission_score, created_at
 `
 
 type CreateSubmissionParams struct {
@@ -25,6 +27,8 @@ type CreateSubmissionParams struct {
 	ToTaskID          int32    `json:"to_task_id"`
 	TaskSubtasks      int32    `json:"task_subtasks"`
 	SubmissionAnswers []string `json:"submission_answers"`
+	SubmissionScore   float64  `json:"submission_score"`
+	SubmissionResults []bool   `json:"submission_results"`
 }
 
 func (q *Queries) CreateSubmission(ctx context.Context, arg CreateSubmissionParams) (Submission, error) {
@@ -33,6 +37,8 @@ func (q *Queries) CreateSubmission(ctx context.Context, arg CreateSubmissionPara
 		arg.ToTaskID,
 		arg.TaskSubtasks,
 		pq.Array(arg.SubmissionAnswers),
+		arg.SubmissionScore,
+		pq.Array(arg.SubmissionResults),
 	)
 	var i Submission
 	err := row.Scan(
@@ -41,13 +47,15 @@ func (q *Queries) CreateSubmission(ctx context.Context, arg CreateSubmissionPara
 		&i.ToTaskID,
 		&i.TaskSubtasks,
 		pq.Array(&i.SubmissionAnswers),
+		pq.Array(&i.SubmissionResults),
+		&i.SubmissionScore,
 		&i.CreatedAt,
 	)
 	return i, err
 }
 
 const listAllSubmissions = `-- name: ListAllSubmissions :many
-SELECT id, from_user_id, to_task_id, task_subtasks, submission_answers, created_at FROM submissions
+SELECT id, from_user_id, to_task_id, task_subtasks, submission_answers, submission_results, submission_score, created_at FROM submissions
 ORDER BY id
 `
 
@@ -57,7 +65,7 @@ func (q *Queries) ListAllSubmissions(ctx context.Context) ([]Submission, error) 
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Submission
+	items := []Submission{}
 	for rows.Next() {
 		var i Submission
 		if err := rows.Scan(
@@ -66,6 +74,8 @@ func (q *Queries) ListAllSubmissions(ctx context.Context) ([]Submission, error) 
 			&i.ToTaskID,
 			&i.TaskSubtasks,
 			pq.Array(&i.SubmissionAnswers),
+			pq.Array(&i.SubmissionResults),
+			&i.SubmissionScore,
 			&i.CreatedAt,
 		); err != nil {
 			return nil, err
@@ -82,7 +92,7 @@ func (q *Queries) ListAllSubmissions(ctx context.Context) ([]Submission, error) 
 }
 
 const listSubmissions = `-- name: ListSubmissions :many
-SELECT id, from_user_id, to_task_id, task_subtasks, submission_answers, created_at FROM submissions
+SELECT id, from_user_id, to_task_id, task_subtasks, submission_answers, submission_results, submission_score, created_at FROM submissions
 ORDER BY id
 LIMIT $1
 OFFSET $2
@@ -99,7 +109,7 @@ func (q *Queries) ListSubmissions(ctx context.Context, arg ListSubmissionsParams
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Submission
+	items := []Submission{}
 	for rows.Next() {
 		var i Submission
 		if err := rows.Scan(
@@ -108,6 +118,8 @@ func (q *Queries) ListSubmissions(ctx context.Context, arg ListSubmissionsParams
 			&i.ToTaskID,
 			&i.TaskSubtasks,
 			pq.Array(&i.SubmissionAnswers),
+			pq.Array(&i.SubmissionResults),
+			&i.SubmissionScore,
 			&i.CreatedAt,
 		); err != nil {
 			return nil, err
@@ -121,4 +133,32 @@ func (q *Queries) ListSubmissions(ctx context.Context, arg ListSubmissionsParams
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateSubmissionScore = `-- name: UpdateSubmissionScore :one
+UPDATE submissions
+SET submission_score = $2
+WHERE id = $1
+RETURNING id, from_user_id, to_task_id, task_subtasks, submission_answers, submission_results, submission_score, created_at
+`
+
+type UpdateSubmissionScoreParams struct {
+	ID              int32   `json:"id"`
+	SubmissionScore float64 `json:"submission_score"`
+}
+
+func (q *Queries) UpdateSubmissionScore(ctx context.Context, arg UpdateSubmissionScoreParams) (Submission, error) {
+	row := q.db.QueryRowContext(ctx, updateSubmissionScore, arg.ID, arg.SubmissionScore)
+	var i Submission
+	err := row.Scan(
+		&i.ID,
+		&i.FromUserID,
+		&i.ToTaskID,
+		&i.TaskSubtasks,
+		pq.Array(&i.SubmissionAnswers),
+		pq.Array(&i.SubmissionResults),
+		&i.SubmissionScore,
+		&i.CreatedAt,
+	)
+	return i, err
 }

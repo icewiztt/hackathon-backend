@@ -10,10 +10,12 @@ import (
 )
 
 func CreateRandomUser(t *testing.T) User {
+	PasswordEncoded, err := util.HassPassword(util.RandomPass())
+	require.NoError(t, err)
 	arg := CreateUserParams{
 		Username:        util.RandomUsr(),
 		Fullname:        util.RandomFullName(),
-		PasswordEncoded: util.RandomPass(),
+		PasswordEncoded: PasswordEncoded,
 		Usertype:        util.RandomUserType(),
 	}
 
@@ -37,7 +39,7 @@ func TestCreateUser(t *testing.T) {
 
 func TestGetUser(t *testing.T) {
 	user := CreateRandomUser(t)
-	user_get, err := testQueries.GetUser(context.Background(), user.ID)
+	user_get, err := testQueries.GetUser(context.Background(), user.Username)
 	require.NoError(t, err)
 	require.NotEmpty(t, user_get)
 	require.Equal(t, user, user_get)
@@ -61,10 +63,12 @@ func TestListUsers(t *testing.T) {
 }
 
 func TestUpdateUserPassword(t *testing.T) {
+	PasswordEncoded, err := util.HassPassword(util.RandomPass())
+	require.NoError(t, err)
 	user := CreateRandomUser(t)
 	arg := UpdateUserPasswordParams{
 		ID:              user.ID,
-		PasswordEncoded: util.RandomPass(),
+		PasswordEncoded: PasswordEncoded,
 	}
 	user_update, err := testQueries.UpdateUserPassword(context.Background(), arg)
 	require.NoError(t, err)
@@ -90,7 +94,7 @@ func TestDeleteUser(t *testing.T) {
 	user := CreateRandomUser(t)
 	err := testQueries.DeleteUser(context.Background(), user.ID)
 	require.NoError(t, err)
-	user_get, err := testQueries.GetUser(context.Background(), user.ID)
+	user_get, err := testQueries.GetUser(context.Background(), user.Username)
 	require.Error(t, err)
 	require.EqualError(t, err, sql.ErrNoRows.Error())
 	require.Empty(t, user_get)

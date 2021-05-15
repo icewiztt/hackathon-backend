@@ -14,6 +14,8 @@ func CreateRandomSubmission(t *testing.T, user User, task Task) Submission {
 		ToTaskID:          task.ID,
 		TaskSubtasks:      task.Subtasks,
 		SubmissionAnswers: util.RandomAnswers(int(task.Subtasks)),
+		SubmissionResults: util.RandomSubmissionResult(int(task.Subtasks)),
+		SubmissionScore:   float64(util.RandomInt(1, 100)),
 	}
 
 	submission, err := testQueries.CreateSubmission(context.Background(), arg)
@@ -24,7 +26,10 @@ func CreateRandomSubmission(t *testing.T, user User, task Task) Submission {
 	require.Equal(t, arg.ToTaskID, submission.ToTaskID)
 	require.Equal(t, arg.TaskSubtasks, submission.TaskSubtasks)
 	require.Equal(t, arg.SubmissionAnswers, submission.SubmissionAnswers)
+	require.Equal(t, arg.SubmissionAnswers, submission.SubmissionAnswers)
 	require.Len(t, submission.SubmissionAnswers, int(submission.TaskSubtasks))
+	require.Len(t, submission.SubmissionResults, int(submission.TaskSubtasks))
+	require.Equal(t, arg.SubmissionResults, submission.SubmissionResults)
 
 	require.NotZero(t, submission.ID)
 	require.NotZero(t, submission.CreatedAt)
@@ -68,4 +73,18 @@ func TestListAllSubmissions(t *testing.T) {
 	for _, submission := range submissions_list {
 		require.NotEmpty(t, submission)
 	}
+}
+
+func TestUpdateSubmissionScore(t *testing.T) {
+	user := CreateRandomUser(t)
+	task := CreateRandomTask(t)
+	sub := CreateRandomSubmission(t, user, task)
+	sub_score_tmp := float64(util.RandomInt(0, 100))
+	sub_up, err := testQueries.UpdateSubmissionScore(context.Background(), UpdateSubmissionScoreParams{
+		ID:              sub.ID,
+		SubmissionScore: sub_score_tmp,
+	})
+	require.NoError(t, err)
+	sub.SubmissionScore = sub_score_tmp
+	require.Equal(t, sub, sub_up)
 }

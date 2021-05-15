@@ -15,18 +15,20 @@ INSERT INTO tasks (
     problemname,
     content,
     subtasks,
-    answers
+    answers,
+    subtasks_score
 ) VALUES (
-    $1 , $2 , $3 , $4 , $5 
-) RETURNING id, shortname, problemname, content, subtasks, answers, created_at
+    $1 , $2 , $3 , $4 , $5 , $6
+) RETURNING id, shortname, problemname, content, subtasks, answers, subtasks_score, created_at
 `
 
 type CreateTaskParams struct {
-	Shortname   string   `json:"shortname"`
-	Problemname string   `json:"problemname"`
-	Content     string   `json:"content"`
-	Subtasks    int32    `json:"subtasks"`
-	Answers     []string `json:"answers"`
+	Shortname     string    `json:"shortname"`
+	Problemname   string    `json:"problemname"`
+	Content       string    `json:"content"`
+	Subtasks      int32     `json:"subtasks"`
+	Answers       []string  `json:"answers"`
+	SubtasksScore []float64 `json:"subtasks_score"`
 }
 
 func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, error) {
@@ -36,6 +38,7 @@ func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, e
 		arg.Content,
 		arg.Subtasks,
 		pq.Array(arg.Answers),
+		pq.Array(arg.SubtasksScore),
 	)
 	var i Task
 	err := row.Scan(
@@ -45,6 +48,7 @@ func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, e
 		&i.Content,
 		&i.Subtasks,
 		pq.Array(&i.Answers),
+		pq.Array(&i.SubtasksScore),
 		&i.CreatedAt,
 	)
 	return i, err
@@ -61,7 +65,7 @@ func (q *Queries) DeleteTask(ctx context.Context, id int32) error {
 }
 
 const getTask = `-- name: GetTask :one
-SELECT id, shortname, problemname, content, subtasks, answers, created_at FROM tasks 
+SELECT id, shortname, problemname, content, subtasks, answers, subtasks_score, created_at FROM tasks 
 WHERE id = $1
 `
 
@@ -75,13 +79,14 @@ func (q *Queries) GetTask(ctx context.Context, id int32) (Task, error) {
 		&i.Content,
 		&i.Subtasks,
 		pq.Array(&i.Answers),
+		pq.Array(&i.SubtasksScore),
 		&i.CreatedAt,
 	)
 	return i, err
 }
 
 const listTasks = `-- name: ListTasks :many
-SELECT id, shortname, problemname, content, subtasks, answers, created_at FROM tasks
+SELECT id, shortname, problemname, content, subtasks, answers, subtasks_score, created_at FROM tasks
 ORDER BY shortname
 LIMIT $1
 OFFSET $2
@@ -98,7 +103,7 @@ func (q *Queries) ListTasks(ctx context.Context, arg ListTasksParams) ([]Task, e
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Task
+	items := []Task{}
 	for rows.Next() {
 		var i Task
 		if err := rows.Scan(
@@ -108,6 +113,7 @@ func (q *Queries) ListTasks(ctx context.Context, arg ListTasksParams) ([]Task, e
 			&i.Content,
 			&i.Subtasks,
 			pq.Array(&i.Answers),
+			pq.Array(&i.SubtasksScore),
 			&i.CreatedAt,
 		); err != nil {
 			return nil, err
@@ -127,7 +133,7 @@ const updateAnswers = `-- name: UpdateAnswers :one
 UPDATE tasks
 SET answers = $2
 WHERE id = $1
-RETURNING id, shortname, problemname, content, subtasks, answers, created_at
+RETURNING id, shortname, problemname, content, subtasks, answers, subtasks_score, created_at
 `
 
 type UpdateAnswersParams struct {
@@ -145,6 +151,7 @@ func (q *Queries) UpdateAnswers(ctx context.Context, arg UpdateAnswersParams) (T
 		&i.Content,
 		&i.Subtasks,
 		pq.Array(&i.Answers),
+		pq.Array(&i.SubtasksScore),
 		&i.CreatedAt,
 	)
 	return i, err
@@ -154,7 +161,7 @@ const updateContent = `-- name: UpdateContent :one
 UPDATE tasks
 SET content = $2
 WHERE id = $1
-RETURNING id, shortname, problemname, content, subtasks, answers, created_at
+RETURNING id, shortname, problemname, content, subtasks, answers, subtasks_score, created_at
 `
 
 type UpdateContentParams struct {
@@ -172,6 +179,7 @@ func (q *Queries) UpdateContent(ctx context.Context, arg UpdateContentParams) (T
 		&i.Content,
 		&i.Subtasks,
 		pq.Array(&i.Answers),
+		pq.Array(&i.SubtasksScore),
 		&i.CreatedAt,
 	)
 	return i, err
@@ -181,7 +189,7 @@ const updateProblemname = `-- name: UpdateProblemname :one
 UPDATE tasks
 SET problemname = $2
 WHERE id = $1
-RETURNING id, shortname, problemname, content, subtasks, answers, created_at
+RETURNING id, shortname, problemname, content, subtasks, answers, subtasks_score, created_at
 `
 
 type UpdateProblemnameParams struct {
@@ -199,6 +207,7 @@ func (q *Queries) UpdateProblemname(ctx context.Context, arg UpdateProblemnamePa
 		&i.Content,
 		&i.Subtasks,
 		pq.Array(&i.Answers),
+		pq.Array(&i.SubtasksScore),
 		&i.CreatedAt,
 	)
 	return i, err
@@ -208,7 +217,7 @@ const updateShortname = `-- name: UpdateShortname :one
 UPDATE tasks
 SET shortname = $2
 WHERE id = $1
-RETURNING id, shortname, problemname, content, subtasks, answers, created_at
+RETURNING id, shortname, problemname, content, subtasks, answers, subtasks_score, created_at
 `
 
 type UpdateShortnameParams struct {
@@ -226,6 +235,7 @@ func (q *Queries) UpdateShortname(ctx context.Context, arg UpdateShortnameParams
 		&i.Content,
 		&i.Subtasks,
 		pq.Array(&i.Answers),
+		pq.Array(&i.SubtasksScore),
 		&i.CreatedAt,
 	)
 	return i, err
@@ -235,7 +245,7 @@ const updateSubtasks = `-- name: UpdateSubtasks :one
 UPDATE tasks
 SET subtasks = $2
 WHERE id = $1
-RETURNING id, shortname, problemname, content, subtasks, answers, created_at
+RETURNING id, shortname, problemname, content, subtasks, answers, subtasks_score, created_at
 `
 
 type UpdateSubtasksParams struct {
@@ -253,6 +263,35 @@ func (q *Queries) UpdateSubtasks(ctx context.Context, arg UpdateSubtasksParams) 
 		&i.Content,
 		&i.Subtasks,
 		pq.Array(&i.Answers),
+		pq.Array(&i.SubtasksScore),
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const updateSubtasksScore = `-- name: UpdateSubtasksScore :one
+UPDATE tasks
+SET subtasks_score = $2
+WHERE id = $1
+RETURNING id, shortname, problemname, content, subtasks, answers, subtasks_score, created_at
+`
+
+type UpdateSubtasksScoreParams struct {
+	ID            int32     `json:"id"`
+	SubtasksScore []float64 `json:"subtasks_score"`
+}
+
+func (q *Queries) UpdateSubtasksScore(ctx context.Context, arg UpdateSubtasksScoreParams) (Task, error) {
+	row := q.db.QueryRowContext(ctx, updateSubtasksScore, arg.ID, pq.Array(arg.SubtasksScore))
+	var i Task
+	err := row.Scan(
+		&i.ID,
+		&i.Shortname,
+		&i.Problemname,
+		&i.Content,
+		&i.Subtasks,
+		pq.Array(&i.Answers),
+		pq.Array(&i.SubtasksScore),
 		&i.CreatedAt,
 	)
 	return i, err

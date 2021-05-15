@@ -1,5 +1,5 @@
 postgres:
-	docker run --name postgres1 -p 5432:5432 -e POSTGRES_PASSWORD=Mrcheat2002 -e  POSTGRES_USER=root -d postgres:13-alpine
+	docker run --name postgres1 -p 5432:5432 -e POSTGRES_PASSWORD=hackathon2021 -e  POSTGRES_USER=root -d postgres:13-alpine
 
 createdb:
 	docker exec -it postgres1 createdb --username=root --owner=root hackathon
@@ -8,10 +8,10 @@ dropdb:
 	docker exec -it postgres1 dropdb hackathon
 
 migrateup:
-	migrate -path db/migration -database "postgresql://root:Mrcheat2002@localhost:5432/hackathon?sslmode=disable" -verbose up
+	migrate -path db/migration -database "postgresql://root:hackathon2021@localhost:5432/hackathon?sslmode=disable" -verbose up
 
 migratedown:
-	migrate -path db/migration -database "postgresql://root:Mrcheat2002@localhost:5432/hackathon?sslmode=disable" -verbose down
+	migrate -path db/migration -database "postgresql://root:hackathon2021@localhost:5432/hackathon?sslmode=disable" -verbose down
 
 sqlc:
 	sqlc generate

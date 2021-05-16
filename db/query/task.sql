@@ -5,9 +5,10 @@ INSERT INTO tasks (
     content,
     subtasks,
     answers,
-    subtasks_score
+    subtasks_score,
+    official
 ) VALUES (
-    $1 , $2 , $3 , $4 , $5 , $6
+    $1 , $2 , $3 , $4 , $5 , $6 , $7
 ) RETURNING *;
 
 -- name: GetTask :one
@@ -16,47 +17,21 @@ WHERE id = $1;
 
 -- name: ListTasks :many
 SELECT * FROM tasks
-ORDER BY shortname
-LIMIT $1
-OFFSET $2;
+WHERE official = true
+ORDER BY shortname;
+
+-- name: ListTasksAdmin :many
+SELECT * FROM tasks
+ORDER BY (official , shortname);
 
 -- name: DeleteTask :exec
 DELETE FROM tasks
 WHERE id = $1;
 
--- name: UpdateAnswers :one
+-- name: UpdateOfficial :one
 UPDATE tasks
-SET answers = $2
+SET official = $2
 WHERE id = $1
 RETURNING *;
 
--- name: UpdateSubtasks :one
-UPDATE tasks
-SET subtasks = $2
-WHERE id = $1
-RETURNING *;
-
--- name: UpdateShortname :one
-UPDATE tasks
-SET shortname = $2
-WHERE id = $1
-RETURNING *;
-
--- name: UpdateProblemname :one
-UPDATE tasks
-SET problemname = $2
-WHERE id = $1
-RETURNING *;
-
--- name: UpdateContent :one
-UPDATE tasks
-SET content = $2
-WHERE id = $1
-RETURNING *;
-
--- name: UpdateSubtasksScore :one
-UPDATE tasks
-SET subtasks_score = $2
-WHERE id = $1
-RETURNING *;
 

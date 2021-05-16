@@ -15,6 +15,7 @@ CREATE TABLE "tasks" (
   "subtasks" int NOT NULL,
   "answers" VARCHAR[6],
   "subtasks_score"  float[6],
+  "official" BOOLEAN NOT NULL,
   "created_at" timestamptz NOT NULL DEFAULT (now())
 );
 

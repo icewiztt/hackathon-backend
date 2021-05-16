@@ -74,17 +74,3 @@ func TestListAllSubmissions(t *testing.T) {
 		require.NotEmpty(t, submission)
 	}
 }
-
-func TestUpdateSubmissionScore(t *testing.T) {
-	user := CreateRandomUser(t)
-	task := CreateRandomTask(t)
-	sub := CreateRandomSubmission(t, user, task)
-	sub_score_tmp := float64(util.RandomInt(0, 100))
-	sub_up, err := testQueries.UpdateSubmissionScore(context.Background(), UpdateSubmissionScoreParams{
-		ID:              sub.ID,
-		SubmissionScore: sub_score_tmp,
-	})
-	require.NoError(t, err)
-	sub.SubmissionScore = sub_score_tmp
-	require.Equal(t, sub, sub_up)
-}

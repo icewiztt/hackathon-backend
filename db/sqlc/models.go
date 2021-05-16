@@ -26,6 +26,7 @@ type Task struct {
 	Subtasks      int32     `json:"subtasks"`
 	Answers       []string  `json:"answers"`
 	SubtasksScore []float64 `json:"subtasks_score"`
+	Official      bool      `json:"official"`
 	CreatedAt     time.Time `json:"created_at"`
 }
 

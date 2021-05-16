@@ -19,9 +19,3 @@ OFFSET $2;
 -- name: ListAllSubmissions :many
 SELECT * FROM submissions
 ORDER BY id;
-
--- name: UpdateSubmissionScore :one 
-UPDATE submissions
-SET submission_score = $2
-WHERE id = $1
-RETURNING *;

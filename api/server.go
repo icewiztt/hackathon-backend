@@ -24,15 +24,14 @@ func NewServer(config util.Config, store *db.Store) (*Server, error) {
 
 	server := &Server{config: config, tokenMaker: tokenMaker, store: store}
 	router := gin.Default()
-
-	router.POST("/users", server.CreateUser)
-	router.POST("/users/login", server.LoginUser)
-
 	authRoutes := router.Group("/").Use(authMiddleware(server.tokenMaker))
 
+	authRoutes.POST("/users", server.CreateUser)
+	router.POST("/users/login", server.LoginUser)
+
 	authRoutes.POST("/tasks", server.CreateTask)
-	authRoutes.GET("/tasks/:id", server.GetTask)
 	authRoutes.GET("/tasks/", server.ListTasks)
+	authRoutes.GET("/tasks/admin", server.ListTasksAdmin)
 
 	authRoutes.POST("/submissions", server.CreateSubmission)
 

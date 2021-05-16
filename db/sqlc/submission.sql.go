@@ -134,31 +134,3 @@ func (q *Queries) ListSubmissions(ctx context.Context, arg ListSubmissionsParams
 	}
 	return items, nil
 }
-
-const updateSubmissionScore = `-- name: UpdateSubmissionScore :one
-UPDATE submissions
-SET submission_score = $2
-WHERE id = $1
-RETURNING id, from_user_id, to_task_id, task_subtasks, submission_answers, submission_results, submission_score, created_at
-`
-
-type UpdateSubmissionScoreParams struct {
-	ID              int32   `json:"id"`
-	SubmissionScore float64 `json:"submission_score"`
-}
-
-func (q *Queries) UpdateSubmissionScore(ctx context.Context, arg UpdateSubmissionScoreParams) (Submission, error) {
-	row := q.db.QueryRowContext(ctx, updateSubmissionScore, arg.ID, arg.SubmissionScore)
-	var i Submission
-	err := row.Scan(
-		&i.ID,
-		&i.FromUserID,
-		&i.ToTaskID,
-		&i.TaskSubtasks,
-		pq.Array(&i.SubmissionAnswers),
-		pq.Array(&i.SubmissionResults),
-		&i.SubmissionScore,
-		&i.CreatedAt,
-	)
-	return i, err
-}

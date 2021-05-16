@@ -19,5 +19,4 @@ func TestPassword(t *testing.T) {
 	err = CheckPassword(invalidpassword, passwordEncoded)
 	require.Error(t, err)
 	require.EqualError(t, err, bcrypt.ErrMismatchedHashAndPassword.Error())
-
 }

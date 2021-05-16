@@ -1,7 +1,6 @@
 package api
 
 import (
-	"database/sql"
 	"errors"
 	"net/http"
 
@@ -17,6 +16,7 @@ type CreateTaskRequest struct {
 	Subtasks      int32     `json:"subtasks" binding:"required"`
 	Answers       []string  `json:"answers" binding:"required"`
 	SubtasksScore []float64 `json:"subtasks_score" binding:"required"`
+	Official      bool      `json:"official" binding:"required"`
 }
 
 func (server *Server) CreateTask(ctx *gin.Context) {
@@ -33,10 +33,19 @@ func (server *Server) CreateTask(ctx *gin.Context) {
 		Subtasks:      req.Subtasks,
 		Answers:       req.Answers,
 		SubtasksScore: req.SubtasksScore,
+		Official:      req.Official,
 	}
 
 	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
-	if authPayload.Usertype == 1 {
+
+	authorized_user, err := server.store.GetUser(ctx, authPayload.Username)
+
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	if authorized_user.Usertype == 1 {
 		err := errors.New("this user is not allowed to add new task")
 		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
 		return
@@ -64,47 +73,8 @@ type GetTaskResponse struct {
 	SubtasksScore []float64 `json:"subtasks_score" binding:"required"`
 }
 
-func (server *Server) GetTask(ctx *gin.Context) {
-	var req GetTaskRequest
-	if err := ctx.ShouldBindUri(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
-		return
-	}
-
-	task, err := server.store.GetTask(ctx, req.ID)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			ctx.JSON(http.StatusNotFound, errorResponse(err))
-			return
-		}
-		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-		return
-	}
-	ctx.JSON(http.StatusOK, GetTaskResponse{
-		Shortname:     task.Shortname,
-		Problemname:   task.Problemname,
-		Content:       task.Content,
-		Subtasks:      task.Subtasks,
-		SubtasksScore: task.SubtasksScore,
-	})
-}
-
-type ListTasksRequest struct {
-	PageSize int32 `form:"PageSize" binding:"required,min=1,max=30"`
-	PageID   int32 `form:"PageID" binding:"required,min=1"`
-}
-
 func (server *Server) ListTasks(ctx *gin.Context) {
-	var req ListTasksRequest
-	if err := ctx.ShouldBindQuery(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
-		return
-	}
-
-	task_list, err := server.store.ListTasks(ctx, db.ListTasksParams{
-		Limit:  req.PageSize,
-		Offset: (req.PageID - 1) * req.PageSize,
-	})
+	task_list, err := server.store.ListTasks(ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
@@ -120,4 +90,28 @@ func (server *Server) ListTasks(ctx *gin.Context) {
 		}
 	}
 	ctx.JSON(http.StatusOK, task)
+}
+
+func (server *Server) ListTasksAdmin(ctx *gin.Context) {
+	task_list, err := server.store.ListTasksAdmin(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+
+	authorized_user, err := server.store.GetUser(ctx, authPayload.Username)
+
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	if authorized_user.Usertype == 1 {
+		err := errors.New("this user is not allowed to edit tasks")
+		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, task_list)
 }

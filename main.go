@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 
 	_ "github.com/lib/pq"
@@ -15,6 +16,7 @@ func main() {
 	if err != nil {
 		log.Fatal("Cannot read config file", err)
 	}
+	fmt.Println(util.HassPassword("HackathonByCSP2021"))
 
 	conn, err := sql.Open(config.DBDriver, config.DBSource)
 	if err != nil {

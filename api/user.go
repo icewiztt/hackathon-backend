@@ -1,13 +1,14 @@
 package api
 
 import (
-	"database/sql"
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/lib/pq"
 	db "github.com/thanhqt2002/hackathon/db/sqlc"
 	"github.com/thanhqt2002/hackathon/db/util"
+	"github.com/thanhqt2002/hackathon/token"
 )
 
 type CreateUserRequest struct {
@@ -35,6 +36,21 @@ func (server *Server) CreateUser(ctx *gin.Context) {
 	var req CreateUserRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+
+	authorized_user, err := server.store.GetUser(ctx, authPayload.Username)
+
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	if authorized_user.Usertype <= req.Usertype {
+		err := errors.New("this user is not allowed to add new user of role higher or equal them him/her-self")
+		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
 		return
 	}
 
@@ -89,10 +105,6 @@ func (server *Server) LoginUser(ctx *gin.Context) {
 	user, err := server.store.GetUser(ctx, req.Username)
 
 	if err != nil {
-		if err == sql.ErrNoRows {
-			ctx.JSON(http.StatusNotFound, errorResponse(err))
-			return
-		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
 		return
 	}
@@ -104,7 +116,7 @@ func (server *Server) LoginUser(ctx *gin.Context) {
 		return
 	}
 
-	AccessToken, err := server.tokenMaker.CreateToken(user.Username, user.Usertype, server.config.TokenAccessDuration)
+	AccessToken, err := server.tokenMaker.CreateToken(user.Username, server.config.TokenAccessDuration)
 
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))

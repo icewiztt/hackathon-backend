@@ -61,22 +61,6 @@ func TestListUsers(t *testing.T) {
 		require.NotEmpty(t, user)
 	}
 }
-
-func TestUpdateUserPassword(t *testing.T) {
-	PasswordEncoded, err := util.HassPassword(util.RandomPass())
-	require.NoError(t, err)
-	user := CreateRandomUser(t)
-	arg := UpdateUserPasswordParams{
-		ID:              user.ID,
-		PasswordEncoded: PasswordEncoded,
-	}
-	user_update, err := testQueries.UpdateUserPassword(context.Background(), arg)
-	require.NoError(t, err)
-	require.Equal(t, user_update.PasswordEncoded, arg.PasswordEncoded)
-	user.PasswordEncoded = user_update.PasswordEncoded
-	require.Equal(t, user, user_update)
-}
-
 func TestUpdateUserFullname(t *testing.T) {
 	user := CreateRandomUser(t)
 	arg := UpdateUserFullnameParams{

@@ -18,12 +18,6 @@ ORDER BY username
 LIMIT $1
 OFFSET $2;
 
--- name: UpdateUserPassword :one
-UPDATE users
-SET password_encoded = $2
-WHERE id = $1
-RETURNING *;
-
 -- name: UpdateUserFullname :one
 UPDATE users
 SET fullname = $2

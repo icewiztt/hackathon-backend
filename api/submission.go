@@ -2,6 +2,7 @@ package api
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -9,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/lib/pq"
 	db "github.com/thanhqt2002/hackathon/db/sqlc"
+	"github.com/thanhqt2002/hackathon/token"
 )
 
 type CreateSubmissionRequest struct {
@@ -50,6 +52,21 @@ func (server *Server) CreateSubmission(ctx *gin.Context) {
 	if len(req.SubmissionAnswers) != int(req.TaskSubtasks) {
 		err := fmt.Errorf("expected slice of length %v but recieved slice of length %v", req.TaskSubtasks, len(req.SubmissionAnswers))
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
+		return
+	}
+
+	authPayload := ctx.MustGet(authorizationPayloadKey).(*token.Payload)
+
+	authorized_user, err := server.store.GetUser(ctx, authPayload.Username)
+
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+
+	if authorized_user.ID != req.FromUserID {
+		err := errors.New("this user is not allowed to make submissions for others")
+		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
 		return
 	}
 
@@ -108,51 +125,3 @@ func (server *Server) CreateSubmission(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, submission)
 }
-
-/*
-type GetTaskRequest struct {
-	ID int32 `uri:"id" binding:"required,min=1"`
-}
-
-func (server *Server) GetTask(ctx *gin.Context) {
-	var req GetTaskRequest
-	if err := ctx.ShouldBindUri(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
-		return
-	}
-
-	task, err := server.store.GetTask(ctx, req.ID)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			ctx.JSON(http.StatusNotFound, errorResponse(err))
-			return
-		}
-		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-		return
-	}
-	ctx.JSON(http.StatusOK, task)
-}
-
-type ListTasksRequest struct {
-	PageSize int32 `form:"PageSize" binding:"required,min=1,max=30"`
-	PageID   int32 `form:"PageID" binding:"required,min=1"`
-}
-
-func (server *Server) ListTasks(ctx *gin.Context) {
-	var req ListTasksRequest
-	if err := ctx.ShouldBindQuery(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, errorResponse(err))
-		return
-	}
-
-	task, err := server.store.ListTasks(ctx, db.ListTasksParams{
-		Limit:  req.PageSize,
-		Offset: (req.PageID - 1) * req.PageSize,
-	})
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-		return
-	}
-	ctx.JSON(http.StatusOK, task)
-}
-*/

@@ -1,7 +1,7 @@
 CREATE TABLE "users" (
   "id" serial PRIMARY KEY,
   "username" varchar UNIQUE NOT NULL,
-  "fullname" varchar NOT NULL,
+  "fullname" varchar UNIQUE NOT NULL,
   "password_encoded" varchar NOT NULL,
   "usertype" int NOT NULL,
   "created_at" timestamptz NOT NULL DEFAULT (now())
@@ -9,7 +9,7 @@ CREATE TABLE "users" (
 
 CREATE TABLE "tasks" (
   "id" serial PRIMARY KEY,
-  "shortname" varchar NOT NULL,
+  "shortname" varchar UNIQUE NOT NULL,
   "problemname" varchar NOT NULL,
   "content" varchar NOT NULL,
   "subtasks" int NOT NULL,
@@ -21,8 +21,10 @@ CREATE TABLE "tasks" (
 
 CREATE TABLE "submissions" (
   "id" serial PRIMARY KEY,
-  "from_user_id" int NOT NULL,
-  "to_task_id" int NOT NULL,
+  "username" varchar NOT NULL,
+  "fullname" varchar NOT NULL,
+  "taskid" int NOT NULL,
+  "taskname" varchar NOT NULL,
   "task_subtasks" int NOT NULL,
   "submission_answers" VARCHAR[6],
   "submission_results" BOOLEAN[6],
@@ -30,18 +32,20 @@ CREATE TABLE "submissions" (
   "created_at" timestamptz NOT NULL DEFAULT (now())
 );
 
-ALTER TABLE "submissions" ADD FOREIGN KEY ("from_user_id") REFERENCES "users" ("id");
+ALTER TABLE "submissions" ADD FOREIGN KEY ("username") REFERENCES "users" ("username");
 
-ALTER TABLE "submissions" ADD FOREIGN KEY ("to_task_id") REFERENCES "tasks" ("id");
+ALTER TABLE "submissions" ADD FOREIGN KEY ("taskid") REFERENCES "tasks" ("id");
+
+ALTER TABLE "submissions" ADD FOREIGN KEY ("fullname") REFERENCES "users" ("fullname");
+
+ALTER TABLE "submissions" ADD FOREIGN KEY ("taskname") REFERENCES "tasks" ("shortname");
 
 CREATE INDEX ON "users" ("username");
 
-CREATE INDEX ON "tasks" ("problemname");
+CREATE INDEX ON "tasks" ("shortname");
 
-CREATE INDEX ON "submissions" ("from_user_id");
+CREATE INDEX ON "submissions" ("fullname");
 
-CREATE INDEX ON "submissions" ("to_task_id");
-
-CREATE INDEX ON "submissions" ("from_user_id", "to_task_id");
+CREATE INDEX ON "submissions" ("fullname", "taskname");
 
 COMMENT ON COLUMN "tasks"."subtasks" IS 'max 6 min 1';

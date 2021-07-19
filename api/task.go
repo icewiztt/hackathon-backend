@@ -66,6 +66,7 @@ type GetTaskRequest struct {
 }
 
 type GetTaskResponse struct {
+	ID            int32     `json:"id" binding:"required"`
 	Shortname     string    `json:"shortname" binding:"required"`
 	Problemname   string    `json:"problemname" binding:"required"`
 	Content       string    `json:"content" binding:"required"`
@@ -82,6 +83,7 @@ func (server *Server) ListTasks(ctx *gin.Context) {
 	task := make([]GetTaskResponse, len(task_list))
 	for i := 0; i < len(task_list); i++ {
 		task[i] = GetTaskResponse{
+			ID:            task_list[i].ID,
 			Shortname:     task_list[i].Shortname,
 			Problemname:   task_list[i].Problemname,
 			Content:       task_list[i].Content,

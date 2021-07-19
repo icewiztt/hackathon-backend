@@ -14,8 +14,8 @@ import (
 )
 
 type CreateSubmissionRequest struct {
-	FromUserID        int32    `json:"FromUserID" binding:"required"`
-	ToTaskID          int32    `json:"ToTaskID" binding:"required"`
+	Username          string   `json:"Username" binding:"required"`
+	TaskID            int32    `json:"TaskID" binding:"required"`
 	TaskSubtasks      int32    `json:"TaskSubtasks" binding:"required"`
 	SubmissionAnswers []string `json:"SubmissionAnswers" binding:"required"`
 }
@@ -48,7 +48,6 @@ func (server *Server) CreateSubmission(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
-
 	if len(req.SubmissionAnswers) != int(req.TaskSubtasks) {
 		err := fmt.Errorf("expected slice of length %v but recieved slice of length %v", req.TaskSubtasks, len(req.SubmissionAnswers))
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
@@ -64,13 +63,13 @@ func (server *Server) CreateSubmission(ctx *gin.Context) {
 		return
 	}
 
-	if authorized_user.ID != req.FromUserID {
+	if authorized_user.Username != req.Username {
 		err := errors.New("this user is not allowed to make submissions for others")
 		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
 		return
 	}
 
-	task, err := server.store.GetTask(ctx, req.ToTaskID)
+	task, err := server.store.GetTask(ctx, req.TaskID)
 	if err != nil {
 		if pqErr, ok := err.(*pq.Error); ok {
 			switch pqErr.Code.Name() {
@@ -92,7 +91,6 @@ func (server *Server) CreateSubmission(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 		return
 	}
-
 	SubmissionResults, SubmissionScore, err := server.CalculateScore(ctx, req, task)
 
 	if err != nil {
@@ -101,8 +99,10 @@ func (server *Server) CreateSubmission(ctx *gin.Context) {
 	}
 
 	arg := db.CreateSubmissionParams{
-		FromUserID:        req.FromUserID,
-		ToTaskID:          req.ToTaskID,
+		Username:          authorized_user.Username,
+		Fullname:          authorized_user.Fullname,
+		Taskid:            req.TaskID,
+		Taskname:          task.Shortname,
 		TaskSubtasks:      req.TaskSubtasks,
 		SubmissionAnswers: req.SubmissionAnswers,
 		SubmissionScore:   SubmissionScore,
@@ -124,4 +124,13 @@ func (server *Server) CreateSubmission(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, submission)
+}
+
+func (server *Server) ListScores(ctx *gin.Context) {
+	scores_list, err := server.store.ListScores(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
+		return
+	}
+	ctx.JSON(http.StatusOK, scores_list)
 }

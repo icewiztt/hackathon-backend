@@ -8,8 +8,10 @@ import (
 
 type Submission struct {
 	ID                int32     `json:"id"`
-	FromUserID        int32     `json:"from_user_id"`
-	ToTaskID          int32     `json:"to_task_id"`
+	Username          string    `json:"username"`
+	Fullname          string    `json:"fullname"`
+	Taskid            int32     `json:"taskid"`
+	Taskname          string    `json:"taskname"`
 	TaskSubtasks      int32     `json:"task_subtasks"`
 	SubmissionAnswers []string  `json:"submission_answers"`
 	SubmissionResults []bool    `json:"submission_results"`

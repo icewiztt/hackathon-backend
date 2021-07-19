@@ -10,8 +10,10 @@ import (
 
 func CreateRandomSubmission(t *testing.T, user User, task Task) Submission {
 	arg := CreateSubmissionParams{
-		FromUserID:        user.ID,
-		ToTaskID:          task.ID,
+		Username:          user.Username,
+		Fullname:          user.Fullname,
+		Taskid:            task.ID,
+		Taskname:          task.Shortname,
 		TaskSubtasks:      task.Subtasks,
 		SubmissionAnswers: util.RandomAnswers(int(task.Subtasks)),
 		SubmissionResults: util.RandomSubmissionResult(int(task.Subtasks)),
@@ -22,8 +24,7 @@ func CreateRandomSubmission(t *testing.T, user User, task Task) Submission {
 	require.NoError(t, err)
 	require.NotEmpty(t, submission)
 
-	require.Equal(t, arg.FromUserID, submission.FromUserID)
-	require.Equal(t, arg.ToTaskID, submission.ToTaskID)
+	require.Equal(t, arg.Taskid, submission.Taskid)
 	require.Equal(t, arg.TaskSubtasks, submission.TaskSubtasks)
 	require.Equal(t, arg.SubmissionAnswers, submission.SubmissionAnswers)
 	require.Equal(t, arg.SubmissionAnswers, submission.SubmissionAnswers)
@@ -72,5 +73,19 @@ func TestListAllSubmissions(t *testing.T) {
 
 	for _, submission := range submissions_list {
 		require.NotEmpty(t, submission)
+	}
+}
+
+func TestListScores(t *testing.T) {
+	for i := 0; i < 10; i++ {
+		user := CreateRandomUser(t)
+		task := CreateRandomTask(t)
+		CreateRandomSubmission(t, user, task)
+	}
+	scores_list, err := testQueries.ListScores(context.Background())
+	require.NoError(t, err)
+
+	for _, score := range scores_list {
+		require.NotEmpty(t, score)
 	}
 }

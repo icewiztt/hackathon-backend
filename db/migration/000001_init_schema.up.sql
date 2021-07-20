@@ -32,18 +32,6 @@ CREATE TABLE "submissions" (
   "created_at" timestamptz NOT NULL DEFAULT (now())
 );
 
-ALTER TABLE "submissions" ADD FOREIGN KEY ("username") REFERENCES "users" ("username");
-
-ALTER TABLE "submissions" ADD FOREIGN KEY ("taskid") REFERENCES "tasks" ("id");
-
-ALTER TABLE "submissions" ADD FOREIGN KEY ("fullname") REFERENCES "users" ("fullname");
-
-ALTER TABLE "submissions" ADD FOREIGN KEY ("taskname") REFERENCES "tasks" ("shortname");
-
-CREATE INDEX ON "users" ("username");
-
-CREATE INDEX ON "tasks" ("shortname");
-
 CREATE INDEX ON "submissions" ("fullname");
 
 CREATE INDEX ON "submissions" ("fullname", "taskname");

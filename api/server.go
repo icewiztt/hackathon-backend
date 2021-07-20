@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	db "github.com/thanhqt2002/hackathon/db/sqlc"
@@ -27,7 +28,6 @@ func CORS() gin.HandlerFunc {
 			c.AbortWithStatus(204)
 			return
 		}
-
 		c.Next()
 	}
 }
@@ -52,6 +52,8 @@ func NewServer(config util.Config, store *db.Store) (*Server, error) {
 
 	authRoutes.POST("/submissions", server.CreateSubmission)
 	authRoutes.GET("/ranking", server.ListScores)
+
+	router.StaticFS("/static", http.Dir("static"))
 
 	server.router = router
 	return server, nil
